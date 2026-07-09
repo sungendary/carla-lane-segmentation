@@ -4,6 +4,7 @@ torch
 torchvision
 numpy
 Pillow
+PyYAML
 
 # CARLA client library must match the server version (0.9.16):
 #   pip install carla==0.9.16

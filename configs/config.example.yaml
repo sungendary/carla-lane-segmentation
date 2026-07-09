@@ -1,0 +1,48 @@
+# ============================================================
+# Example configuration for the CARLA lane-segmentation project.
+#
+# Copy this file to `config.yaml` (same folder) and edit the values.
+# `config.yaml` is gitignored, so your local values are never committed;
+# this example file documents the expected structure for other users.
+# ============================================================
+
+# --- Data collection (collect_data.py) ---
+collect:
+  map: Town03                # CARLA map name, e.g. Town01, Town02, Town03, Town05
+  weather: ClearNoon         # a carla.WeatherParameters preset name
+  out: town03_clear          # subfolder under dataset/ to save into
+  frames: 500                # number of frames to save
+  image_width: 800
+  image_height: 600
+  fov: 90
+
+# --- Training (train.py) ---
+train:
+  # one or more dataset subfolders (under dataset/) to train on.
+  # list multiple folders to train across several maps/conditions.
+  data_dirs:
+    - town01_clear
+    - town02_clear
+    - town03_clear
+  num_classes: 3
+  batch_size: 4
+  epochs: 10
+  lr: 0.0001
+  val_split: 0.2             # fraction of data held out for validation
+  # per-class loss weights: [road, lane, background]
+  # lane is upweighted to counter its small pixel share.
+  class_weights: [1.0, 10.0, 1.0]
+  img_width: 512
+  img_height: 256
+  num_workers: 4
+  model_out: seg_model.pth   # where to save trained weights
+
+# --- Evaluation (evaluate.py) ---
+eval:
+  eval_dir: town05_clear     # dataset subfolder to evaluate on
+  num_classes: 3
+  batch_size: 4
+  img_width: 512
+  img_height: 256
+  num_workers: 4
+  model_path: seg_model.pth  # trained weights to load

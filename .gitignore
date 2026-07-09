@@ -6,6 +6,9 @@ output_sync/
 # Trained model weights (large)
 *.pth
 
+# Local config with actual values (use config.example.yaml as template)
+configs/config.yaml
+
 # Python cache
 __pycache__/
 *.pyc
