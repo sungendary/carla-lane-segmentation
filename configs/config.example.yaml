@@ -46,3 +46,10 @@ eval:
   img_height: 256
   num_workers: 4
   model_path: seg_model.pth  # trained weights to load
+
+# --- Batch collection server management (run_collection.py, approach B) ---
+server:
+  script: /path/to/CARLA_0.9.16/CarlaUE4.sh   # your CarlaUE4.sh path
+  headless: true          # start with -RenderOffScreen (no window)
+  boot_timeout: 60        # seconds to wait for the server to accept connections
+  port: 2000

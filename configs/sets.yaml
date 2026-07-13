@@ -1,0 +1,49 @@
+# Data-collection grid for the enhanced baseline: 30 sets, 1500 frames each.
+# The batch runner (run_collection.py) reads this file and collects each set.
+# Town05 is the held-out evaluation map and never appears here.
+#
+# frames: default per-set frame count (can be overridden per row).
+frames: 1500
+
+sets:
+  # --- Town01 (small town, T-junctions) ---
+  - { map: Town01, weather: ClearNoon,      out: town01_clearnoon }
+  - { map: Town01, weather: CloudyNoon,     out: town01_cloudynoon }
+  - { map: Town01, weather: MidRainyNoon,   out: town01_midrainnoon }
+  - { map: Town01, weather: ClearSunset,    out: town01_clearsunset }
+  - { map: Town01, weather: WetNoon,        out: town01_wetnoon }
+
+  # --- Town02 (smaller mixed town) ---
+  - { map: Town02, weather: ClearNoon,      out: town02_clearnoon }
+  - { map: Town02, weather: CloudyNoon,     out: town02_cloudynoon }
+  - { map: Town02, weather: WetCloudyNoon,  out: town02_wetcloudynoon }
+  - { map: Town02, weather: SoftRainNoon,   out: town02_softrainnoon }
+  - { map: Town02, weather: CloudySunset,   out: town02_cloudysunset }
+
+  # --- Town03 (complex urban) ---
+  - { map: Town03, weather: ClearNoon,      out: town03_clearnoon }
+  - { map: Town03, weather: CloudyNoon,     out: town03_cloudynoon }
+  - { map: Town03, weather: WetNoon,        out: town03_wetnoon }
+  - { map: Town03, weather: HardRainNoon,   out: town03_hardrainnoon }
+  - { map: Town03, weather: ClearSunset,    out: town03_clearsunset }
+
+  # --- Town04 (highway, mountains) ---
+  - { map: Town04, weather: ClearNoon,      out: town04_clearnoon }
+  - { map: Town04, weather: WetNoon,        out: town04_wetnoon }
+  - { map: Town04, weather: WetCloudyNoon,  out: town04_wetcloudynoon }
+  - { map: Town04, weather: MidRainyNoon,   out: town04_midrainnoon }
+  - { map: Town04, weather: WetSunset,      out: town04_wetsunset }
+
+  # --- Town06 (long multi-lane highway) ---
+  - { map: Town06, weather: ClearNoon,      out: town06_clearnoon }
+  - { map: Town06, weather: CloudyNoon,     out: town06_cloudynoon }
+  - { map: Town06, weather: WetNoon,        out: town06_wetnoon }
+  - { map: Town06, weather: HardRainNoon,   out: town06_hardrainnoon }
+  - { map: Town06, weather: ClearSunset,    out: town06_clearsunset }
+
+  # --- Town07 (rural, narrow roads) ---
+  - { map: Town07, weather: ClearNoon,      out: town07_clearnoon }
+  - { map: Town07, weather: CloudyNoon,     out: town07_cloudynoon }
+  - { map: Town07, weather: WetNoon,        out: town07_wetnoon }
+  - { map: Town07, weather: SoftRainNoon,   out: town07_softrainnoon }
+  - { map: Town07, weather: WetCloudyNoon,  out: town07_wetcloudynoon }
