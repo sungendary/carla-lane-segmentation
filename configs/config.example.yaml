@@ -26,7 +26,8 @@ train:
     - town03_clear
   num_classes: 3
   batch_size: 4
-  epochs: 10
+  epochs: 40                 # max epochs; early stopping usually stops sooner
+  patience: 5                # stop if val_loss doesn't improve for this many epochs
   lr: 0.0001
   val_split: 0.2             # fraction of data held out for validation
   # per-class loss weights: [road, lane, background]
