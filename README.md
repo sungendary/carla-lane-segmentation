@@ -103,9 +103,26 @@ cp configs/config.example.yaml configs/config.yaml   # then edit values
 ## Data
 
 The dataset (45,000 training frames + held-out Town05 evaluation sets) is
-hosted externally and not stored in this repo. Download and extract it into
-`dataset/`. *(Link added once uploaded — see baseline_comparison.md for the
-exact set list, which mirrors `configs/sets.yaml`.)*
+hosted on the Hugging Face Hub, not in this repo:
+[**sungendary/carla-lane-segmentation**](https://huggingface.co/datasets/sungendary/carla-lane-segmentation).
+
+```
+train/  town01.tar.gz ... town07.tar.gz   # 6 maps, 45,000 frames
+eval/   town05_eval.tar.gz                # held-out Town05, 3 conditions
+```
+
+Download and extract into `dataset/`:
+
+```bash
+pip install huggingface_hub
+hf download sungendary/carla-lane-segmentation train/town01.tar.gz --repo-type dataset --local-dir .
+# repeat for town02, town03, town04, town06, town07, and eval/town05_eval.tar.gz
+for f in train/*.tar.gz eval/*.tar.gz; do tar xzf "$f"; done
+```
+
+Each archive expands into `dataset/townXX_.../rgb` and `.../label_raw`,
+ready for training. Only `label_raw` (not the colorized `label_vis`) is
+included, since that's what training needs.
 
 To regenerate instead of downloading: start the CARLA server and run
 `python src/run_collection.py` (training sets), then collect the Town05
