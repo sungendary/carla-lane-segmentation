@@ -9,48 +9,57 @@ weather** — not just whether it works on the training condition.
 This is a personal research project built to study the perception stage of
 an autonomous-driving pipeline end to end: synchronized data collection,
 automatic ground-truth labeling, model training, and quantitative
-per-class evaluation.
+per-class evaluation, developed through a series of hypothesis-driven
+experiments.
 
-> **Status:** active. The current milestone establishes a baseline model
-> and a generalization benchmark. Subsequent work improves generalization
-> and is tracked through commit history.
+> **Status:** active. The current milestone is an enhanced baseline trained
+> on 45,000 frames across 6 maps and 10 weather types, with a measured
+> generalization benchmark on a held-out map.
 
 ---
 
 ## Highlights
 
-- **Fully automatic labeling.** Ground-truth segmentation masks come
-  directly from CARLA's semantic-segmentation camera — no manual
-  annotation. Data is collected in **synchronous mode**, so every RGB frame
-  and its label mask are guaranteed to correspond to the same simulation
-  tick.
-- **Generalization is measured, not assumed.** The model is evaluated on
-  an unseen map and unseen weather conditions, with per-class IoU, to
-  expose where perception breaks down.
-- **Reproducible pipeline.** Datasets and weights are not committed (they
-  are large and regenerable); the scripts below reproduce them from
-  scratch.
+- **Fully automatic labeling.** Ground-truth masks come directly from
+  CARLA's semantic-segmentation camera — no manual annotation. Collection
+  runs in **synchronous mode**, so every RGB frame and its label mask
+  correspond to the same simulation tick.
+- **Generalization is measured, not assumed.** Evaluation is on a fully
+  held-out map (Town05) across multiple weather conditions, with per-class
+  IoU, to show where perception holds and where it breaks.
+- **Robust large-scale collection.** A batch runner collects 30 map/weather
+  sets unattended: it manages the CARLA server per set (restarting it to
+  avoid long-run memory leaks), resumes after interruptions, isolates
+  failures, and filters out stationary (red-light) frames.
+- **Reproducible.** Datasets and weights are not committed (large,
+  regenerable); scripts + a downloadable dataset reproduce everything.
 
 ---
 
-## Key result
+## Key result: generalization improved through three experiments
 
-The model was trained on a **single condition** (Town03 / ClearNoon) and
-evaluated on the training condition plus three unseen ones. Lane marking is
-the target class and the hardest to segment (~2% of pixels).
+Target metric: **lane IoU on an unseen map (Town05)** — the hardest class.
 
-| Condition | Type | Road IoU | Lane IoU | mIoU |
-|---|---|---|---|---|
-| Town03 / ClearNoon | seen (baseline) | 0.960 | **0.389** | 0.782 |
-| Town05 / ClearNoon | unseen map | 0.778 | **0.100** | 0.597 |
-| Town03 / HardRain  | unseen weather | 0.887 | **0.130** | 0.658 |
-| Town03 / Sunset    | unseen weather | 0.887 | **0.183** | 0.685 |
+| Experiment | Training data | Unseen-map lane IoU |
+|---|---|---|
+| 1. Single condition | Town03 ClearNoon, 500 | 0.100 |
+| 2. Map diversity | 3 maps ClearNoon, 1,500 | 0.128 |
+| 3. Enhanced baseline | 6 maps x 10 weather, 45,000 | **0.492** |
 
-**Finding:** lane segmentation collapses under every unseen condition, and
-an **unseen map degrades performance more than unseen weather** — the model
-overfit to the geometry of its single training map. This points to map
-diversity as the primary generalization bottleneck. Full analysis in
-[`results/baseline_comparison.md`](results/baseline_comparison.md).
+Experiment 3 (current baseline), evaluated on the held-out map Town05:
+
+| Eval condition | Road IoU | Lane IoU | mIoU |
+|---|---|---|---|
+| Town05 / ClearNoon | 0.934 | 0.492 | 0.807 |
+| Town05 / HardRain  | 0.954 | 0.561 | 0.833 |
+| Town05 / ClearSunset | 0.941 | 0.491 | 0.808 |
+
+**Key findings:** scaling data volume and adding weather diversity raised
+unseen-map lane IoU nearly 4x over map-diversity alone; the rain condition,
+previously the weakest, became the strongest — a learned weather condition
+transferred to a new map. Full analysis, including an honest note on
+eval-set comparability, is in
+[`baseline_comparison.md`](baseline_comparison.md).
 
 ### Prediction example
 
@@ -64,86 +73,59 @@ Left to right: input RGB, ground-truth mask, model prediction
 ## Pipeline
 
 ```
-collect_data.py   ->   train.py   ->   evaluate.py / predict.py
- (RGB + labels)        (DeepLabV3)      (per-class IoU / visualization)
+run_collection.py  ->  train.py  ->  evaluate.py / predict.py
+ (30 sets, robust)     (DeepLabV3)    (per-class IoU / visualization)
 ```
 
 | Script | Role |
 |---|---|
-| `src/collect_data.py` | Drives an autopilot vehicle in synchronous mode and saves paired RGB + semantic-label frames for a chosen map/weather. |
-| `src/dataset.py` | PyTorch `Dataset`: loads RGB/label pairs and remaps CARLA's raw class IDs to the 3 project classes. |
-| `src/model.py` | Builds a DeepLabV3 (ResNet-50) with its output layer replaced for 3 classes. |
-| `src/train.py` | Training loop with a class-weighted loss (lanes upweighted to counter class imbalance). |
-| `src/evaluate.py` | Confusion-matrix based per-class IoU / mIoU over a dataset. |
-| `src/predict.py` | Runs inference on one sample and saves an RGB / ground-truth / prediction comparison image. |
-| `tools/check_label.py` | Inspects the raw class IDs present in a label file. |
-| `learning/mission*.py` | Step-by-step scripts written while learning the CARLA API (spawn, camera, synchronous mode). |
+| `src/collect_data.py` | Collects one map/weather set (synchronous mode, speed filter). Runnable standalone or by the batch runner. |
+| `src/run_collection.py` | Batch runner: collects all sets in `configs/sets.yaml`, managing the server per set, with resume + failure isolation. |
+| `src/dataset.py` | PyTorch `Dataset`: loads RGB/label pairs across one or many folders; remaps CARLA class IDs to 3 classes. |
+| `src/model.py` | DeepLabV3 (ResNet-50) with the output layer replaced for 3 classes. |
+| `src/train.py` | Training with class-weighted loss, best-model saving, and early stopping. |
+| `src/evaluate.py` | Confusion-matrix per-class IoU / mIoU on a dataset. |
+| `src/predict.py` | Inference on one sample -> RGB / ground-truth / prediction image. |
+| `configs/sets.yaml` | The 30 map/weather sets that make up the training grid. |
 
 ---
 
 ## Setup
 
-**Requirements**
-
-- CARLA 0.9.16
-- Python 3.10, PyTorch (CUDA build)
-- An NVIDIA GPU (developed on an RTX 4080, 16 GB)
+- CARLA 0.9.16, Python 3.10, PyTorch (CUDA build)
+- NVIDIA GPU (developed on RTX 4080, 16 GB)
 
 ```bash
-# in your CARLA python environment
 pip install -r requirements.txt
+cp configs/config.example.yaml configs/config.yaml   # then edit values
 ```
 
-The CARLA server must be running before any data-collection script:
+## Data
+
+The dataset (45,000 training frames + held-out Town05 evaluation sets) is
+hosted externally and not stored in this repo. Download and extract it into
+`dataset/`. *(Link added once uploaded — see baseline_comparison.md for the
+exact set list, which mirrors `configs/sets.yaml`.)*
+
+To regenerate instead of downloading: start the CARLA server and run
+`python src/run_collection.py` (training sets), then collect the Town05
+evaluation sets via `configs/config.yaml`'s `collect:` section.
+
+## Train / evaluate
 
 ```bash
-cd /path/to/CARLA_0.9.16
-./CarlaUE4.sh
-```
-
-## Reproduce
-
-Datasets and the trained model are not stored in this repo. Regenerate them:
-
-**1. Collect data.** Set `MAP_NAME`, `WEATHER`, and `SAVE_SUBDIR` at the top
-of `src/collect_data.py`, then run it once per condition. For the baseline:
-
-```bash
-python src/collect_data.py     # e.g. Town03 / ClearNoon -> dataset/town03_clear
-```
-
-**2. Train** on the collected condition:
-
-```bash
-python src/train.py            # writes seg_model.pth
-```
-
-**3. Evaluate** on any condition by setting `EVAL_DIR` in `src/evaluate.py`:
-
-```bash
-python src/evaluate.py         # prints per-class IoU and mIoU
-```
-
-**4. Visualize** a prediction:
-
-```bash
-python src/predict.py          # writes a comparison image
+python src/train.py       # trains on configs/config.yaml train.data_dirs
+python src/evaluate.py    # set eval.eval_dir to a Town05 set
+python src/predict.py     # visualize one prediction
 ```
 
 ---
 
 ## Roadmap
 
-- [ ] Retrain with multiple maps to test the map-diversity hypothesis and
-      raise unseen-map lane IoU above the 0.100 baseline.
+- [x] Establish single-condition baseline and quantify its generalization gap.
+- [x] Test the map-diversity hypothesis.
+- [x] Scale data + weather diversity into an enhanced baseline (45k frames).
 - [ ] Increase input resolution to recover thin lane structure.
-- [ ] Expand the condition matrix (more maps, night, fog) into a fuller
-      generalization benchmark.
-- [ ] Connect perception output to a downstream planning step.
-
-## Notes
-
-Class remapping (CARLA raw ID -> project class): `Road (1) -> 0`,
-`RoadLine (24) -> 1`, everything else `-> 2`. Labels are resized with
-nearest-neighbor interpolation to avoid creating invalid intermediate
-class IDs.
+- [ ] Re-evaluate earlier models on the new eval set (controlled comparison).
+- [ ] Extend conditions (night, fog); connect perception to planning.

@@ -26,8 +26,8 @@ train:
     - town03_clear
   num_classes: 3
   batch_size: 4
-  epochs: 40                 # max epochs; early stopping usually stops sooner
-  patience: 5                # stop if val_loss doesn't improve for this many epochs
+  epochs: 50                 # max epochs; early stopping usually stops sooner
+  patience: 10                # stop if val_loss doesn't improve for this many epochs
   lr: 0.0001
   val_split: 0.2             # fraction of data held out for validation
   # per-class loss weights: [road, lane, background]
@@ -54,3 +54,13 @@ server:
   headless: true          # start with -RenderOffScreen (no window)
   boot_timeout: 60        # seconds to wait for the server to accept connections
   port: 2000
+
+# --- Prediction visualization (predict.py) ---
+predict:
+  data_dir: town05_clearnoon   # dataset subfolder to sample from
+  index: 0                     # which sample to visualize
+  model_path: seg_model.pth
+  num_classes: 3
+  img_width: 512
+  img_height: 256
+  out_image: results/prediction_result.png
